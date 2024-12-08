@@ -1,0 +1,38 @@
+name: Upload Assets to Cloudflare R2
+
+on:
+  push:
+    paths:
+      - 'blog/assets/*'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: install aws cli
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+      - name: Setting up AWS CLI
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          aws configure set aws_access_key_id ${{ env.R2_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ env.R2_SECRET_ACCESS_KEY }}
+
+      - name: Sync assets to Cloudflare R2
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: aws --endpoint-url=https://${{ env.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com s3 sync blog/assets s3://${{ env.R2_BUCKET_NAME }}/blog/assets
