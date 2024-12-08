@@ -2,6 +2,6 @@
   "promptDelete": false,
   "attachmentFolderPath": "/",
   "useMarkdownLinks": true,
-  "newLinkFormat": "absolute",
+  "newLinkFormat": "relative",
   "showUnsupportedFiles": false
 }
