@@ -1,6 +1,7 @@
 name: Upload Assets to Cloudflare R2
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'blog/assets/**'
