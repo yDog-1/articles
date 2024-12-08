@@ -1,5 +1,7 @@
 {
   "promptDelete": false,
-  "attachmentFolderPath": "./attachments",
-  "useMarkdownLinks": true
+  "attachmentFolderPath": "/",
+  "useMarkdownLinks": true,
+  "newLinkFormat": "absolute",
+  "showUnsupportedFiles": false
 }
