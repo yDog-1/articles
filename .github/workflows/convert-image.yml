@@ -1,5 +1,8 @@
 name: Convert Images to WEBP
 
+env:
+  IMAGES_DIR: blog/assets
+
 on:
   workflow_dispatch:
   push:
@@ -17,8 +20,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2 # 最新のコミットと1つ前のコミットを取得
 
       - name: Install webp tool
         run: sudo apt-get update && sudo apt-get install -y webp
@@ -28,7 +29,7 @@ jobs:
         run: |
           git config core.quotepath false # マルチバイト文字をエスケープしない設定
 
-          changed_files=$(git diff --diff-filter=AM --name-only origin/main HEAD | grep -E '\.(jpg|jpeg|png|gif)$' || true)
+          changed_files=$(git diff --diff-filter=AM --name-only HEAD^ | grep -E '\.(jpg|jpeg|png|gif)$' || true)
 
           echo 'changed_files=$changed_files' >> $GITHUB_OUTPUT
 
@@ -39,7 +40,7 @@ jobs:
             output='${f%.*}.webp'
             cwebp '$f' -o '$output'
             rm '$f'
-            echo 'Converted $f to $output'
+            echo '::notice Converted $f to $output'
           done
 
       - name: Commit and push changes
@@ -48,6 +49,7 @@ jobs:
           git config user.name 'convert-to-webp'
           git config user.email 'convert-to-webp@github.com'
 
-          git add -A
+          echo '::notice Changed files are '$(git diff --name-only)
+          git add ${{ env.IMAGES_DIR }}/*
           git commit -m 'Convert images to WEBP'
           git push
