@@ -1,0 +1,53 @@
+name: Convert Images to WEBP
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'blog/assets/**'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  convert-to-webp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # 最新のコミットと1つ前のコミットを取得
+
+      - name: Install webp tool
+        run: sudo apt-get update && sudo apt-get install -y webp
+
+      - name: Determine changed image files
+        id: diff
+        run: |
+          git config core.quotepath false # マルチバイト文字をエスケープしない設定
+
+          changed_files=$(git diff --diff-filter=AM --name-only origin/main HEAD | grep -E '\.(jpg|jpeg|png|gif)$' || true)
+
+          echo 'changed_files=$changed_files' >> $GITHUB_OUTPUT
+
+      - name: Convert images to WEBP
+        if: ${{ steps.diff.outputs.changed_files != '' }}
+        run: |
+          for f in ${{ steps.diff.outputs.changed_files }}; do
+            output='${f%.*}.webp'
+            cwebp '$f' -o '$output'
+            rm '$f'
+            echo 'Converted $f to $output'
+          done
+
+      - name: Commit and push changes
+        if: ${{ steps.diff.outputs.changed_files != '' }}
+        run: |
+          git config user.name 'convert-to-webp'
+          git config user.email 'convert-to-webp@github.com'
+
+          git add -A
+          git commit -m 'Convert images to WEBP'
+          git push
