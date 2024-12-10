@@ -1,5 +1,5 @@
 {
-  "attachmentFolderPath": "./assets/${date:format}",
+  "attachmentFolderPath": "./assets/${filename}",
   "autoRenameFiles": false,
   "autoRenameFolder": true,
   "convertImagesOnDragAndDrop": false,
