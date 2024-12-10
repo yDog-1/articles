@@ -1,7 +1,4 @@
-name: Convert Images to WEBP
-
-env:
-  IMAGES_DIR: "blog/assets"
+name: Convert and push images to WebP
 
 on:
   workflow_dispatch:
@@ -12,6 +9,9 @@ on:
 defaults:
   run:
     shell: bash
+
+env:
+  IMAGE_EXTENSIONS: '\.(jpg|jpeg|png|gif)$'
 
 jobs:
   convert-to-webp:
@@ -29,12 +29,13 @@ jobs:
         run: |
           git config core.quotepath false # マルチバイト文字をエスケープしない設定
 
-          changed_files=$(git diff --diff-filter=AM --name-only HEAD^ | grep -E "\.(jpg|jpeg|png|gif)$" || true)
+          changed_files=$(git diff --diff-filter=AM --name-only HEAD^ | grep -E "${{ env.IMAGE_EXTENSIONS }}" || true)
 
           echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
 
-      - name: Convert images to WEBP
-        if: ${{ steps.diff.outputs.changed_files != '' }}
+      # 以下2つのステップは、変換対象ファイルがある場合のみ実行
+      - name: Convert images to WebP
+        if: steps.diff.outputs.changed_files != ''
         run: |
           mkdir -p converted # 出力ディレクトリを作成
 
@@ -46,7 +47,8 @@ jobs:
             echo "::notice::Converted $file to $output"
           done
 
-      - name: Move assets to Cloudflare R2
+      - name: Upload converted assets to Cloudflare R2
+        if: steps.diff.outputs.changed_files != ''
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
