@@ -46,13 +46,14 @@ jobs:
             echo "::notice::Converted $file to $output"
           done
 
-      - name: Commit and push changes
-        if: ${{ steps.diff.outputs.changed_files != '' }}
+      - name: Move assets to Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
-          git config user.name 'convert-to-webp'
-          git config user.email 'convert-to-webp@github.com'
-
-          echo '::notice Changed files are '$(git diff --name-only)
-          git add ${{ env.IMAGES_DIR }}/*
-          git commit -m 'Convert images to WEBP'
-          git push
+          for file in converted/*.webp; do
+            aws --endpoint-url="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" s3 mv "$file" "s3://${R2_BUCKET_NAME}/blog/"
+            echo "::notice::Uploaded $file to R2"
+          done
